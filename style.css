@@ -408,11 +408,8 @@ h2 {
     user-select: none;
     transition: all 0.1s ease;
     z-index: 45;
-}
-
-.fire-btn:active {
-    transform: scale(0.9);
-    box-shadow: 0 0 30px rgba(255, 0, 102, 1);
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 @media (min-width: 769px) {

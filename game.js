@@ -78,7 +78,8 @@ class Player {
         }
 
         this.fireRate--;
-        if (shooting && this.fireRate <= 0) {
+        // Tirer automatiquement vers la souris
+        if (this.fireRate <= 0) {
             this.shoot();
             this.fireRate = this.fireDelay;
         }
@@ -337,9 +338,8 @@ class Particle {
 
 // Touches clavier
 const keys = {};
-let mouseX = 0;
-let mouseY = 0;
-let shooting = false;
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
 let isMobile = false;
 
 // Variables joystick
@@ -370,22 +370,11 @@ window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
-window.addEventListener('mousemove', (e) => {
+// Suivre la souris sur tout le document
+document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
-});
-
-window.addEventListener('mousedown', (e) => {
-    if (e.button === 0) { // clic gauche
-        shooting = true;
-    }
-});
-
-window.addEventListener('mouseup', (e) => {
-    if (e.button === 0) {
-        shooting = false;
-    }
-});
+}, true);
 
 // Événements tactiles pour mobile
 document.addEventListener('touchstart', handleTouchStart, false);
@@ -406,15 +395,6 @@ function handleTouchStart(e) {
             joystickActive = true;
             joystickStartX = x;
             joystickStartY = y;
-            e.preventDefault();
-        }
-        
-        // Vérifier si le toucher est sur le bouton de tir (bas-droit)
-        const fireButtonX = window.innerWidth - 70;
-        const fireButtonY = window.innerHeight - 70;
-        const fireDist = Math.sqrt(Math.pow(x - fireButtonX, 2) + Math.pow(y - fireButtonY, 2));
-        if (fireDist < 60) {
-            shooting = true;
             e.preventDefault();
         }
     }
@@ -485,25 +465,6 @@ function handleTouchEnd(e) {
         if (stick) {
             stick.style.transform = 'translate(0px, 0px)';
         }
-    }
-    
-    // Vérifier si le toucher de tir est terminé
-    let fireTouching = false;
-    for (let i = 0; i < touches.length; i++) {
-        const touch = touches[i];
-        const x = touch.clientX;
-        const y = touch.clientY;
-        
-        const fireButtonX = window.innerWidth - 70;
-        const fireButtonY = window.innerHeight - 70;
-        const fireDist = Math.sqrt(Math.pow(x - fireButtonX, 2) + Math.pow(y - fireButtonY, 2));
-        if (fireDist < 60) {
-            fireTouching = true;
-        }
-    }
-    
-    if (!fireTouching) {
-        shooting = false;
     }
 }
 
