@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alien OVNI - Jeu Spatial</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Menu Principal -->
+        <div id="menu-screen" class="screen active">
+            <div class="menu-content">
+                <h1 class="game-title">ALIEN OVNI</h1>
+                <div class="menu-buttons">
+                    <button id="start-btn" class="menu-btn">Commencer le Jeu</button>
+                    <button id="battle-pass-btn" class="menu-btn">Pass de Combat</button>
+                    <button id="quests-btn" class="menu-btn">Tâches</button>
+                    <button id="settings-btn" class="menu-btn">Paramètres</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Écran Pass de Combat -->
+        <div id="battle-pass-screen" class="screen">
+            <div class="battle-pass-content">
+                <h2>Pass de Combat</h2>
+                <div class="battle-pass-info">
+                    <p>Progression: <span id="bp-progress">0</span>%</p>
+                    <div class="progress-bar">
+                        <div id="bp-bar" class="progress-fill"></div>
+                    </div>
+                    <div class="rewards">
+                        <h3>Récompenses Débloquées:</h3>
+                        <div id="rewards-list"></div>
+                    </div>
+                </div>
+                <button id="back-from-bp" class="menu-btn">Retour</button>
+            </div>
+        </div>
+
+        <!-- Écran Tâches -->
+        <div id="quests-screen" class="screen">
+            <div class="quests-content">
+                <h2>Tâches et Objectifs</h2>
+                <div id="quests-list"></div>
+                <button id="back-from-quests" class="menu-btn">Retour</button>
+            </div>
+        </div>
+
+        <!-- Écran du Jeu -->
+        <div id="game-screen" class="screen">
+            <canvas id="gameCanvas"></canvas>
+            <div id="hud">
+                <div id="hud-level">Niveau: <span id="level-text">1</span></div>
+                <div id="hud-health">Santé: <span id="health-text">100</span></div>
+                <div id="hud-score">Score: <span id="score-text">0</span></div>
+                <div id="hud-aliens">Aliens: <span id="aliens-text">0</span></div>
+            </div>
+            <button id="pause-btn" class="pause-btn">Pause</button>
+        </div>
+
+        <!-- Écran Pause -->
+        <div id="pause-screen" class="screen">
+            <div class="pause-content">
+                <h2>Jeu en Pause</h2>
+                <button id="resume-btn" class="menu-btn">Continuer</button>
+                <button id="menu-btn" class="menu-btn">Menu Principal</button>
+            </div>
+        </div>
+
+        <!-- Écran Game Over -->
+        <div id="gameover-screen" class="screen">
+            <div class="gameover-content">
+                <h2>GAME OVER</h2>
+                <div id="gameover-stats">
+                    <p>Niveau atteint: <span id="final-level">0</span></p>
+                    <p>Score final: <span id="final-score">0</span></p>
+                    <p>Aliens eliminés: <span id="final-aliens">0</span></p>
+                </div>
+                <button id="restart-btn" class="menu-btn">Recommencer</button>
+                <button id="home-btn" class="menu-btn">Menu Principal</button>
+            </div>
+        </div>
+
+        <!-- Écran Victoire de Niveau -->
+        <div id="levelup-screen" class="screen">
+            <div class="levelup-content">
+                <h2>NIVEAU COMPLÉTÉ!</h2>
+                <div id="levelup-info">
+                    <p>Niveau: <span id="levelup-level">0</span></p>
+                    <p>Score niveau: <span id="levelup-score">0</span></p>
+                </div>
+                <button id="next-level-btn" class="menu-btn">Niveau Suivant</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
