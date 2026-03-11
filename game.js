@@ -60,23 +60,43 @@ class Player {
     }
 
     update() {
-        if (keys['ArrowLeft'] || keys['a']) this.x -= this.speed;
-        if (keys['ArrowRight'] || keys['d']) this.x += this.speed;
-        if (keys['ArrowUp'] || keys['w']) this.y -= this.speed;
-        if (keys['ArrowDown'] || keys['s']) this.y += this.speed;
-
-        this.x = Math.max(0, Math.min(this.x, window.innerWidth - this.width));
-        this.y = Math.max(window.innerHeight / 2, Math.min(this.y, window.innerHeight - this.height));
+        // Suivre la souris
+        const dx = mouseX - (this.x + this.width / 2);
+        const dy = mouseY - (this.y + this.height / 2);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 5) {
+            const moveX = (dx / distance) * this.speed;
+            const moveY = (dy / distance) * this.speed;
+            
+            this.x += moveX;
+            this.y += moveY;
+            
+            // Empêcher de sortir de l'écran
+            this.x = Math.max(0, Math.min(this.x, window.innerWidth - this.width));
+            this.y = Math.max(0, Math.min(this.y, window.innerHeight - this.height));
+        }
 
         this.fireRate--;
-        if (keys[' '] && this.fireRate <= 0) {
+        if (shooting && this.fireRate <= 0) {
             this.shoot();
             this.fireRate = this.fireDelay;
         }
     }
 
     shoot() {
-        playerBullets.push(new PlayerBullet(this.x + this.width / 2 - 2, this.y));
+        const dx = mouseX - (this.x + this.width / 2);
+        const dy = mouseY - (this.y + this.height / 2);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 0) {
+            playerBullets.push(new PlayerBullet(
+                this.x + this.width / 2 - 2,
+                this.y,
+                dx / distance,
+                dy / distance
+            ));
+        }
     }
 
     draw(ctx) {
@@ -109,16 +129,19 @@ class Player {
 
 // Classe PlayerBullet
 class PlayerBullet {
-    constructor(x, y) {
+    constructor(x, y, dx, dy) {
         this.x = x;
         this.y = y;
         this.width = 4;
         this.height = 15;
         this.speed = 8;
+        this.dx = dx;
+        this.dy = dy;
     }
 
     update() {
-        this.y -= this.speed;
+        this.x += this.dx * this.speed;
+        this.y += this.dy * this.speed;
     }
 
     draw(ctx) {
@@ -314,6 +337,28 @@ class Particle {
 
 // Touches clavier
 const keys = {};
+let mouseX = 0;
+let mouseY = 0;
+let shooting = false;
+let isMobile = false;
+
+// Variables joystick
+let joystickActive = false;
+let joystickX = 0;
+let joystickY = 0;
+let joystickStartX = 0;
+let joystickStartY = 0;
+const JOYSTICK_RADIUS = 60;
+const JOYSTICK_CENTER_X = 60;
+const JOYSTICK_CENTER_Y = 490; // bottom + height/2
+
+// Détecter si c'est un mobile
+function detectMobile() {
+    isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+               window.innerWidth <= 768;
+    return isMobile;
+}
+
 window.addEventListener('keydown', (e) => {
     keys[e.key] = true;
     if (e.key === 'Escape') {
@@ -325,8 +370,154 @@ window.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
+window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+
+window.addEventListener('mousedown', (e) => {
+    if (e.button === 0) { // clic gauche
+        shooting = true;
+    }
+});
+
+window.addEventListener('mouseup', (e) => {
+    if (e.button === 0) {
+        shooting = false;
+    }
+});
+
+// Événements tactiles pour mobile
+document.addEventListener('touchstart', handleTouchStart, false);
+document.addEventListener('touchmove', handleTouchMove, false);
+document.addEventListener('touchend', handleTouchEnd, false);
+
+function handleTouchStart(e) {
+    const touches = e.touches;
+    
+    for (let i = 0; i < touches.length; i++) {
+        const touch = touches[i];
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        // Vérifier si le toucher est sur le joystick (bas-gauche)
+        const dist = Math.sqrt(Math.pow(x - JOYSTICK_CENTER_X, 2) + Math.pow(y - JOYSTICK_CENTER_Y, 2));
+        if (dist < JOYSTICK_RADIUS + 40) {
+            joystickActive = true;
+            joystickStartX = x;
+            joystickStartY = y;
+            e.preventDefault();
+        }
+        
+        // Vérifier si le toucher est sur le bouton de tir (bas-droit)
+        const fireButtonX = window.innerWidth - 70;
+        const fireButtonY = window.innerHeight - 70;
+        const fireDist = Math.sqrt(Math.pow(x - fireButtonX, 2) + Math.pow(y - fireButtonY, 2));
+        if (fireDist < 60) {
+            shooting = true;
+            e.preventDefault();
+        }
+    }
+}
+
+function handleTouchMove(e) {
+    const touches = e.touches;
+    
+    for (let i = 0; i < touches.length; i++) {
+        const touch = touches[i];
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        if (joystickActive) {
+            const deltaX = x - joystickStartX;
+            const deltaY = y - joystickStartY;
+            
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            if (distance > JOYSTICK_RADIUS) {
+                const angle = Math.atan2(deltaY, deltaX);
+                joystickX = Math.cos(angle) * JOYSTICK_RADIUS;
+                joystickY = Math.sin(angle) * JOYSTICK_RADIUS;
+            } else {
+                joystickX = deltaX;
+                joystickY = deltaY;
+            }
+            
+            // Mettre à jour la position du stick visuel
+            const stick = document.getElementById('joystick-stick');
+            if (stick) {
+                stick.style.transform = `translate(${joystickX}px, ${joystickY}px)`;
+            }
+            
+            // Mettre à jour les coordonnées souris pour suivre le joystick
+            const magnitude = Math.sqrt(joystickX * joystickX + joystickY * joystickY) / JOYSTICK_RADIUS;
+            if (magnitude > 0.1 && player) {
+                const angle = Math.atan2(joystickY, joystickX);
+                mouseX = player.x + player.width / 2 + Math.cos(angle) * 500;
+                mouseY = player.y + player.height / 2 + Math.sin(angle) * 500;
+            }
+            
+            e.preventDefault();
+        }
+    }
+}
+
+function handleTouchEnd(e) {
+    const touches = e.touches;
+    let joystickTouching = false;
+    
+    for (let i = 0; i < touches.length; i++) {
+        const touch = touches[i];
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        const dist = Math.sqrt(Math.pow(x - JOYSTICK_CENTER_X, 2) + Math.pow(y - JOYSTICK_CENTER_Y, 2));
+        if (dist < JOYSTICK_RADIUS + 40) {
+            joystickTouching = true;
+        }
+    }
+    
+    if (!joystickTouching) {
+        joystickActive = false;
+        joystickX = 0;
+        joystickY = 0;
+        const stick = document.getElementById('joystick-stick');
+        if (stick) {
+            stick.style.transform = 'translate(0px, 0px)';
+        }
+    }
+    
+    // Vérifier si le toucher de tir est terminé
+    let fireTouching = false;
+    for (let i = 0; i < touches.length; i++) {
+        const touch = touches[i];
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        const fireButtonX = window.innerWidth - 70;
+        const fireButtonY = window.innerHeight - 70;
+        const fireDist = Math.sqrt(Math.pow(x - fireButtonX, 2) + Math.pow(y - fireButtonY, 2));
+        if (fireDist < 60) {
+            fireTouching = true;
+        }
+    }
+    
+    if (!fireTouching) {
+        shooting = false;
+    }
+}
+
 // Initialiser le jeu
 function initGame() {
+    // Détecter le mobile
+    detectMobile();
+    
+    // Afficher ou cacher les contrôles mobiles
+    const mobileControls = document.getElementById('mobile-controls');
+    if (mobileControls) {
+        mobileControls.style.display = isMobile ? 'block' : 'none';
+    }
+    
     canvas = document.getElementById('gameCanvas');
     if (!canvas) {
         console.error('Canvas not found');
